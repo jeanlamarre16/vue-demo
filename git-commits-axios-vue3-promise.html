@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Commits example</title>
+    <style>
+        #demo {
+				font-family: "Helvetica", Arial, sans-serif;
+			}
+			a {
+				text-decoration: none;
+				color: #f66;
+			}
+			li {
+				line-height: 1.5em;
+				margin-bottom: 20px;
+			}
+			.author,
+			.date {
+				font-weight: bold;
+			}
+			body {
+    			font-size: 16px;
+    			line-height: 1.6;
+			}
+			h1 {
+    			color: #333;
+    			text-align: center;
+			}
+			input[type="radio"] {
+    			margin-right: 5px;
+			}
+			label {
+    			cursor: pointer;
+			}
+			ul {
+    			list-style: none;
+    			padding: 0;
+			}
+			li {
+    			border-bottom: 1px solid #ddd;
+    			padding: 10px 0;
+			}
+			a {
+    			color: #007BFF;
+    			text-decoration: none;
+			}
+			a:hover {
+    			text-decoration: underline;
+			}
+			#demo {
+    			max-width: 800px;
+    			margin: 0 auto;
+    			padding: 20px;
+			}
+    </style>
+</head>
+
+<body>
+    <div id="demo">
+        <h1>Latest Vue.js Commits</h1>
+        <template v-for="branch in branches">
+            <input type="radio" :id="branch" :value="branch" name="branch" v-model="currentBranch" />
+            <label :for="branch">{{ branch }}</label>
+        </template>
+        <br />Valeur de currentBranch: {{ currentBranch }}
+        <p>vuejs/vue@{{ currentBranch }}</p>
+        <ul>
+            <li v-for="record in filteredCommits">
+                <a :href="record.html_url" target="_blank" class="commit">{{ record.sha.slice(0, 7) }}</a> -
+                <span class="message">{{ formattedMessage(record.commit.message) }}</span><br />
+                by <span class="author"><a :href="record.author.html_url" target="_blank">{{ record.commit.author.name }}</a></span>
+                at <span class="date">{{ formattedDate(record.commit.author.date) }}</span>
+            </li>
+        </ul>
+    </div>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/vue@3"></script>
+    <script>
+        const apiURL = "https://api.github.com/repos/vuejs/core/commits?per_page=6&sha=";
+
+        Vue.createApp({
+            data() {
+                return {
+                    branches: ["main", "3.2", "v2-compat"],
+                    currentBranch: "main",
+                    commits: [],
+                };
+            },
+
+            computed: {
+                filteredCommits() {
+                    // Filter commits for the selected branch and author "evan you"
+                    return this.commits.filter(commit => commit.commit.author.name === "Evan You");
+                }
+            },
+
+            created: function () {
+                this.fetchDataPromise();
+            },
+
+            watch: {
+                currentBranch: "fetchDataPromise",
+            },
+            methods: {
+                fetchDataPromise: function () {
+                    axios
+                        .get(apiURL + this.currentBranch)
+                        .then((response) => {
+                            console.log(response.data);
+                            this.commits = response.data;
+                        })
+                        .catch(function (error) {
+                            console.log("API call error");
+                            console.log(error);
+                        });
+                },
+                formattedMessage: function (message) {
+                    const newline = message.indexOf("\n");
+                    console.log(newline);
+                    return newline > 0 ? message.slice(0, newline) : message;
+                },
+                formattedDate: function (date) {
+                    return date.replace(/T|Z/g, " ");
+                },
+            },
+        }).mount("#demo");
+    </script>
+</body>
+
+</html>
